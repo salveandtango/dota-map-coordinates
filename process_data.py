@@ -50,7 +50,8 @@ def generate_gridnav_image(src, dst):
         pixels = image.load()
         for pt in data:
             x, y = world_to_image(pt['x'], pt['y'])
-            pixels[x, y] = (0, 0, 0)
+            if 0 <= x < gridWidth and 0 <= y < gridHeight:
+                pixels[x, y] = (0, 0, 0)
         image.save(dst)
 
 def generate_elevation_image(src, dst):
@@ -62,8 +63,9 @@ def generate_elevation_image(src, dst):
             row = data[gX]
             for gY in range(0, len(row)):
                 x, y = grid_to_image(gX, gY)
-                z = int(data[gX][gY]) + 1
-                pixels[x, y] = (20 * z, 20 * z, 20 * z)
+                if 0 <= x < gridWidth and 0 <= y < gridHeight:
+                    z = int(data[gX][gY]) + 1
+                    pixels[x, y] = (20 * z, 20 * z, 20 * z)
         image.save(dst)
 
 def generate_ent_fow_blocker_node_image(files, dst):
@@ -84,7 +86,8 @@ def generate_ent_fow_blocker_node_image(files, dst):
     pixels = image.load()
     for pt in data:
         x, y = world_to_image(pt[0], pt[1])
-        pixels[x, y] = (0, 0, 0)
+        if 0 <= x < gridWidth and 0 <= y < gridHeight:
+            pixels[x, y] = (0, 0, 0)
     image.save(dst)
 
 def generate_tree_elevation_image(src, dst):
@@ -94,8 +97,9 @@ def generate_tree_elevation_image(src, dst):
         pixels = image.load()
         for pt in data:
             x, y = world_to_image(pt['x'], pt['y'])
-            z = int(pt['z'] / 128) + 1
-            pixels[x, y] = (20 * z, 0, 0)
+            if 0 <= x < gridWidth and 0 <= y < gridHeight:
+                z = int(pt['z'] / 128) + 1
+                pixels[x, y] = (20 * z, 0, 0)
         image.save(dst)
 
 def parse_tools_no_wards_prefab(src, dst):
@@ -205,7 +209,8 @@ def generate_tools_no_wards_image(src, dst, image=None):
                 wX, wY = grid_to_world(gX, gY)
                 if any_contains_corner(data, [wX, wY]):
                     x, y = grid_to_image(gX, gY)
-                    pixels[x, y] = (0, 0, 0)
+                    if 0 <= x < gridWidth and 0 <= y < gridHeight:
+                        pixels[x, y] = (0, 0, 0)
         image.save(dst)
     return image
 
@@ -243,7 +248,7 @@ def parse_vmap_for_cell_info(src, layer_name='defaultLayer'):
 
 class CMapTile:
 
-    cell_configuration, cell_orientation = parse_vmap_for_cell_info('data/dota.vmap.txt')
+    cell_configuration, cell_orientation = parse_vmap_for_cell_info('datav2/dota.vmap.txt')
     
     def __init__(self):
         self.elementid = ""
@@ -348,7 +353,7 @@ def generate_tools_no_wards_image_from_tile_data(parser_src, prefab_src, dst, im
 
     data = []
     for mesh_obj in mesh_objs:
-        mesh_obj.load_parent_map_tile('data/dire_basic.vmap.txt')
+        mesh_obj.load_parent_map_tile('datav2/dire_basic.vmap.txt')
         cells = mesh_obj.parent_map_tile.get_cells_for_node_id()
         for cell in cells:
             points = []
@@ -377,7 +382,8 @@ def generate_tools_no_wards_image_from_tile_data(parser_src, prefab_src, dst, im
             wX, wY = grid_to_world(gX, gY)
             if any_intersects_point(data, [wX, wY]):
                 x, y = grid_to_image(gX, gY)
-                pixels[x, y] = (0, 0, 0)
+                if 0 <= x < gridWidth and 0 <= y < gridHeight:
+                    pixels[x, y] = (0, 0, 0)
     image.save(dst)
     return image
 
@@ -400,28 +406,28 @@ def stitch_images(files, dst):
 worldMinX, worldMinY, \
 worldMaxX, worldMaxY, \
 worldWidth, worldHeight, \
-gridWidth, gridHeight = load_world_data("data/worlddata.json")
+gridWidth, gridHeight = load_world_data("datav2/worlddata.json")
 
 print('loaded world data', worldMinX, worldMinY, worldMaxX, worldMaxY, worldWidth, worldHeight, gridWidth, gridHeight)
 print('generating gridnav image')
-generate_gridnav_image("data/gridnavdata.json", "img/gridnav.png")
+generate_gridnav_image("datav2/gridnavdata.json", "img/gridnav.png")
 print('generating elevation image')
-generate_elevation_image("data/elevationdata.json", "img/elevation.png")
+generate_elevation_image("datav2/elevationdata.json", "img/elevation.png")
 print('generating ent_fow_blocker_node image')
-generate_ent_fow_blocker_node_image(["data/dota_pvp_prefab.vmap.txt", "data/dota_custom_default_000.vmap.txt"], "img/ent_fow_blocker_node.png")
+generate_ent_fow_blocker_node_image(["datav2/dota_pvp_prefab.vmap.txt", "datav2/dota_custom_default_000.vmap.txt"], "img/ent_fow_blocker_node.png")
 print('generating tree_elevation image')
-generate_tree_elevation_image("data/mapdata.json", "img/tree_elevation.png")
+generate_tree_elevation_image("datav2/mapdata.json", "img/tree_elevation.png")
 print('parsing dota_pvp_prefab')
-parse_tools_no_wards_prefab("data/dota_pvp_prefab.vmap.txt", "data/tools_no_wards.txt")
+parse_tools_no_wards_prefab("datav2/dota_pvp_prefab.vmap.txt", "datav2/tools_no_wards.txt")
 print('generating tools_no_wards data')
-generate_tools_no_wards_data("keyvalues2.js", "data/tools_no_wards.txt", "data/tools_no_wards.json")
+generate_tools_no_wards_data("keyvalues2.js", "datav2/tools_no_wards.txt", "datav2/tools_no_wards.json")
 print('generating tools_no_wards image')
-im = generate_tools_no_wards_image("data/tools_no_wards.json", "img/tools_no_wards.png")
+im = generate_tools_no_wards_image("datav2/tools_no_wards.json", "img/tools_no_wards.png")
 # add tools_no_wards from tiles to image
 print('parsing dire_basic prefab')
-parse_tools_no_wards_prefab("data/dire_basic.vmap.txt", "data/dire_basic_tools_no_wards.txt")
+parse_tools_no_wards_prefab("datav2/dire_basic.vmap.txt", "datav2/dire_basic_tools_no_wards.txt")
 print('adding tile data to tools_no_wards image')
-generate_tools_no_wards_image_from_tile_data("keyvalues2.js", "data/dire_basic_tools_no_wards.txt", "img/tools_no_wards.png", im)
+generate_tools_no_wards_image_from_tile_data("keyvalues2.js", "datav2/dire_basic_tools_no_wards.txt", "img/tools_no_wards.png", im)
 print('stitching final image')
 stitch_images(["img/elevation.png", "img/tree_elevation.png", "img/gridnav.png", "img/ent_fow_blocker_node.png", "img/tools_no_wards.png"], "img/map_data.png")
 print('done')

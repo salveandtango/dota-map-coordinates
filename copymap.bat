@@ -1,10 +1,25 @@
-echo. 2>"C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta\game\dota\mapdata.json"
-echo. 2>"C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta\game\dota\worlddata.json"
-echo. 2>"C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta\game\dota\elevationdata.json"
-echo. 2>"C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta\game\dota\gridnavdata.json"
+@echo off
+REM ============================================
+REM Dota 2 Map Extractor - Copy Map Files
+REM ============================================
+REM Update DOTA_PATH to match your Steam installation
+REM ============================================
 
-del /s /q "content\dota_addons\dota-map-coordinates\maps"
-xcopy /s /y "C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta\content\dota\maps" "content\dota_addons\dota-map-coordinates\maps\"
+set DOTA_PATH=E:\SteamLibrary\steamapps\common\dota 2 beta
 
-del /s /q "game\dota_addons\dota-map-coordinates\maps"
-xcopy /s /y "C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta\game\dota\maps\dota.vpk" "game\dota_addons\dota-map-coordinates\maps\"
+echo Copying latest Dota 2 map files to addon...
+
+REM Copy content maps (vmap source files)
+if not exist "content\dota_addons\dota-map-coordinates\maps" mkdir "content\dota_addons\dota-map-coordinates\maps"
+xcopy /s /y "%DOTA_PATH%\content\dota\maps" "content\dota_addons\dota-map-coordinates\maps\"
+
+REM Copy game maps (compiled vpk)
+if not exist "addon\maps" mkdir "addon\maps"
+xcopy /s /y "%DOTA_PATH%\game\dota\maps\dota.vpk" "addon\maps\"
+
+echo.
+echo Done! Now copy folders to Dota 2:
+echo   addon\  -^>  %DOTA_PATH%\game\dota_addons\dota-map-coordinates\
+echo   content\  -^>  %DOTA_PATH%\content\dota_addons\dota-map-coordinates\
+echo.
+pause

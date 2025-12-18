@@ -1,65 +1,152 @@
-# dota-map-coordinates
+# Dota 2 Map Data Extractor
 
-Custom game for dumping map entity coordinate data to JSON and scripts for generating elevation and vision related images. See [dota vision simulation](https://github.com/devilesk/dota-vision-simulation) and [dota interactive map](https://github.com/devilesk/dota-interactive-map) for an application of the data.
+> Based on [devilesk/dota-map-coordinates](https://github.com/devilesk/dota-map-coordinates) - Updated for Python 3.9+ with simplified VConsole workflow
 
-## Usage
+Extract map coordinate data (buildings, trees, elevation, etc.) from Dota 2 for each patch update.
 
-### Step 1 Copy the latest map meta data
+**Updated for Python 3.9+** (original scripts required Python 2.7)
 
-Run `copymap.bat` to get the latest dota map files. Also creates an empty mapdata.txt output file.
+## Prerequisites
 
-### Step 2 Create the custom game
+- **Python 3.9+** with packages: `matplotlib`, `numpy`, `Pillow`
+- **Node.js** (optional, for parsing vmap files)
+- **Dota 2 Workshop Tools** (Steam: Right-click Dota 2 → Properties → DLC → Install Workshop Tools)
 
-Copy both folders `dota-map-coordinates/content/` and  `dota-map-coordinates/game/` to `<your_dota2_directory>/steamapps/common/dota 2 beta/` 
+Install Python packages:
+```
+pip install matplotlib numpy Pillow
+```
 
-Launch the custom game in Workshop Tools (Right click the Dota 2 Icon and Choose `Launch Dota2 - Tools`. Workshop Tools needs to already be installed). You will see a new custom game named `dota-map-coordinates`. Select it and launch the game.
+## Quick Start (Simplified Workflow)
 
-![docs_guide1.png](docs_guide1.png?raw=true)
+### Step 0: Update Map Files (For New Dota Patches)
 
-Open your console, enter `dota_lauch_custom_game dota`, and wait for the to game start. Select a hero and enter the game. Once the game has loaded completely, the following files will be automatically generated:
+Edit `copymap.bat` and set your Dota 2 path:
+```bat
+set DOTA_PATH=E:\SteamLibrary\steamapps\common\dota 2 beta
+```
 
-* `mapdata.json` - Coordinates of all buildings, trees, shops, etc.
+Run `copymap.bat` to copy latest map files from Dota 2 to the addon folders.
 
-* `worlddata.json` - Map dimensions.
+### Step 1: Install the Custom Game Addon
 
-* `gridnavdata.json` - Coordinates of all untraversable 64x64 grid tiles. 
+Copy both folders to your Dota 2 directory:
 
-* `elevationdata.json` - Elevations of each 64x64 grid tile.
+```
+addon/   → <DOTA_PATH>\game\dota_addons\dota-map-coordinates\
+content/ → <DOTA_PATH>\content\dota_addons\dota-map-coordinates\
+```
 
-Output path:
+### Step 2: Run the Custom Game & Save Console Output
 
-`C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta\game\dota\mapdata.txt`
+1. Launch **Dota 2 Workshop Tools** (Right-click Dota 2 → "Launch Dota 2 - Tools")
+2. Open the Workshop Tools, select custom game `dota-map-coordinates`
+3. Launch the game, open VConsole, run: `dota_launch_custom_game dota-map-coordinates dota`
 
-> Note: The empty text files need to exist or else folders instead of text files will be created by the custom game and no output will be saved.
+![VConsole Command](vconsole_command.png)
 
-The text files also needs to be cleared before each run because the custom game can only append the data to the file.
+4. Select a hero and enter the game
+5. Wait for game to fully load - data prints to VConsole with `[start]`/`[end]` markers
 
-### Step 3 Process the data
+![VConsole Output](vconsole_output.png)
 
-Run `copydata.bat` to copy the generated files from the dota directory to the data folder in the repository directory.
+**Save VConsole output:**
+- VConsole logs are typically saved in your Dota 2 directory
+- Or copy the entire console output manually
 
-Run `textvmap.bat` to generate the vmap.txt files using dmxconvert. Text vmaps can also be created by opening the prefab files in Hammer and doing Save Copy As Text.
+### Step 3: Process the Console Log
 
-Run `process_data.py` to generate json and images based on the data. (Only supports `python 2.7` and some requirements need to be installed)
+1. **Copy your console log file** to `datav2/current_version.log`
 
-## Output
+2. **Run the parser** to generate JSON files:
+   ```
+   python process_console.py
+   ```
+   
+   Output (in `datav2/` folder):
+   - `mapdata.json` - Buildings, trees, shops, spawners coordinates
+   - `worlddata.json` - Map dimensions  
+   - `gridnavdata.json` - Untraversable grid tiles
+   - `elevationdata.json` - Elevation data per tile
 
-The following images are created:
+### Step 4: Generate Images (Optional)
 
-* `gridnav.png` - Generated from gridnavdata.json.
+```
+python process_data.py
+```
 
-![gridnav.png](img/gridnav.png?raw=true)
+Output (in `img/` folder):
+- `gridnav.png` - Walkable/blocked areas
+- `elevation.png` - Terrain elevation
+- `tree_elevation.png` - Tree positions with elevation
+- `map_data.png` - Combined stitched image
 
-* `elevation.png` - Generated from elevationdata.json.
+**Note:** Full image generation requires `.vmap.txt` files. Basic images (gridnav, elevation, tree_elevation) work with just the JSON data.
 
-![elevation.png](img/elevation.png?raw=true)
+## What Was Fixed (Python 3 Compatibility)
 
-* `tree_elevation.png` - Generated from mapdata.json.
+### process_console.py
+- Changed input file: `data/723_data.log` → `datav2/current_version.log`
+- Added VConsole prefix stripping: `[   VScript                ]: ` 
+- Added UTF-8 encoding with error handling
+- Fixed string split for colon handling
 
-![tree_elevation.png](img/tree_elevation.png?raw=true)
+### process_data.py
+- Changed all paths: `data/` → `datav2/`
+- Added bounds checking for pixel operations (prevents IndexError)
 
-* `ent_fow_blocker_node.png` - Generated from text versions of map prefab files, dota_pvp_prefab.vmap and dota_custom_default_000.vmap.
+## File Structure
 
-![ent_fow_blocker_node.png](img/ent_fow_blocker_node.png?raw=true)
+```
+dota-map-extractor/
+├── addon/                    # Game addon (copy to dota_addons/)
+│   └── scripts/vscripts/
+│       └── addon_game_mode.lua
+├── content/                  # Content addon (copy to content/dota_addons/)
+│   └── dota_addons/dota-map-coordinates/maps/
+├── datav2/                   # Put console log here, JSON output here
+│   └── current_version.log   # ← Your console log goes here
+├── img/                      # Generated images output
+├── copymap.bat               # Copies latest map files from Dota 2
+├── process_console.py        # Parses console log → JSON (Python 3)
+├── process_data.py           # Generates images from JSON (Python 3)
+├── graham_scan.py            # Convex hull algorithm
+├── keyvalues2.js             # Valve KeyValues parser
+└── README.md
+```
 
-* `map_data.png` - All the above images stitched together horizontally into one image.
+## Console Log Format
+
+The Lua addon prints data via `print()` to VConsole:
+```
+[   VScript                ]: [start]
+[   VScript                ]: mapdata.json
+[   VScript                ]: data:
+[   VScript                ]:   npc_dota_tower:
+[   VScript                ]:     1:
+[   VScript                ]:       x: 1234
+[   VScript                ]:       y: 5678
+...
+[   VScript                ]: [end]
+```
+
+`process_console.py` strips the prefix and parses the indented YAML-like structure into JSON.
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Empty JSON files | Check console log has `[start]`/`[end]` markers |
+| `UnicodeDecodeError` | Already handled with `errors='ignore'` |
+| `IndexError: image index out of range` | Already fixed with bounds checking |
+| Missing `.vmap.txt` files | Some images won't generate, but core JSON works |
+
+## For Future Dota 2 Updates
+
+1. Run `copymap.bat` to get latest map files
+2. Copy `addon/` and `content/` to Dota 2
+3. Run custom game in Workshop Tools: `dota_launch_custom_game dota-map-coordinates dota`
+4. Copy VConsole log to `datav2/current_version.log`
+5. Run `python process_console.py` → generates JSON
+6. Run `python process_data.py` (optional) → generates images
+7. Done! JSON files are in `datav2/`, images in `img/`

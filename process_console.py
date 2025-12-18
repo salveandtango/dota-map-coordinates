@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 def all_int(l):
     try:
@@ -9,7 +10,17 @@ def all_int(l):
     except:
         return False
 
-with open('data/723_data.log', 'r') as f:
+# Pattern to match VScript console output prefix (only strip one space after :])
+vscript_prefix = re.compile(r'^\[\s*VScript\s*\]: ')
+
+def strip_prefix(line):
+    """Strip the VScript console prefix if present"""
+    match = vscript_prefix.match(line)
+    if match:
+        return line[match.end():]
+    return line
+
+with open('datav2/current_version.log', 'r', encoding='utf-8', errors='ignore') as f:
     lines = f.readlines()
     started = False
     next_filename = False
@@ -20,6 +31,7 @@ with open('data/723_data.log', 'r') as f:
     level = -1
     for line in lines:
         line = line.rstrip('\n')
+        line = strip_prefix(line)  # Strip VScript prefix
         if line == '[start]':
             started = True
             next_filename = True
@@ -43,11 +55,14 @@ with open('data/723_data.log', 'r') as f:
                     tbl[key] = list(curr_tbl.values())
 ##                    print(tbl[key])
                 curr_tbl = tbl
-            with open(os.path.join('data', filename), 'w') as g:
+            with open(os.path.join('datav2', filename), 'w') as g:
                 g.write(json.dumps(data, separators=(',', ':')))
         elif started:
             line_level = (len(line) - len(line.lstrip())) / 2
-            k, v = [x.strip() for x in line.split(':')]
+            parts = line.split(':', 1)  # Split only on first colon
+            if len(parts) != 2:
+                continue  # Skip malformed lines
+            k, v = [x.strip() for x in parts]
 ##            print(line_level, k, v)
             while level > line_level:
 ##                print(all_int(curr_tbl.keys()))
