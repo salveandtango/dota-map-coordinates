@@ -661,7 +661,7 @@ function GameMode:OnGameRulesStateChange()
         print("[end]")
         
         
-        GridNav:DestroyTreesAroundPoint(Vector(0, 0, 0), 9999, true)
+        --GridNav:DestroyTreesAroundPoint(Vector(0, 0, 0), 9999, true)
         --DestroyBuildings()
         --SetNoVision()
         
