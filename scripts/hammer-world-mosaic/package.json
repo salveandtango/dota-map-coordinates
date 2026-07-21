@@ -1,0 +1,18 @@
+{
+  "name": "dota2-hammer-world-mosaic",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic camera-plan and stitching tools for Dota 2 Hammer normal-world captures.",
+  "scripts": {
+    "plan": "node generate-camera-plan.mjs --config profiles/build-24204564-v1.json",
+    "analyze-voids": "node analyze-internal-voids.mjs",
+    "stitch": "node stitch-world-mosaic.mjs",
+    "repair-highgrounds": "node repair-highgrounds.mjs",
+    "audit-vrf": "node validate-vrf-profile.mjs profiles/build-24266061-vrf-orthographic-v1.json",
+    "self-test": "node self-test.mjs && node self-test.mjs profiles/build-24266061-v1.1.json && node self-test.mjs profiles/build-24266061-vrf-orthographic-v1.json"
+  },
+  "dependencies": {
+    "sharp": "0.35.3"
+  }
+}

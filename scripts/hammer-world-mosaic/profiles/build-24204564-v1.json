@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "profileId": "hammer-world-mosaic-24204564-v1",
+  "dotaBuildId": "24204564",
+  "product": "normal-3d-world-render",
+  "mapMode": "official-read-only",
+  "camera": {
+    "z": 4000,
+    "pitch": 89.9,
+    "yaw": 0,
+    "roll": 0,
+    "xPositions": [-9000, -6000, -3000, 0, 3000, 6000, 9000],
+    "yPositions": [-7000, 0, 7000],
+    "captureOrder": "x-major"
+  },
+  "tileFiles": {
+    "pattern": "tile_x{x}_y{y}_clean.png",
+    "sourceOverrides": {
+      "0,0": "fresh_center_clean_x0_y0.png"
+    }
+  },
+  "captureCrop": {
+    "observedHammerClientWidth": 1582,
+    "observedHammerClientHeight": 932,
+    "savedTileWidth": 1570,
+    "savedTileHeight": 700,
+    "contentLeft": 2,
+    "contentTop": 28,
+    "contentWidth": 1568,
+    "contentHeight": 672,
+    "tileOverrides": {
+      "0,0": {
+        "savedTileHeight": 680,
+        "contentHeight": 652
+      }
+    }
+  },
+  "projection": {
+    "pixelsPerWorldUnit": 0.205,
+    "canvasLeftAtY0": 1435,
+    "canvasTopAtX0": 1870,
+    "worldOriginPixelX": 2219,
+    "worldOriginPixelY": 2245
+  },
+  "canvas": {
+    "width": 4438,
+    "height": 4387,
+    "background": [0, 0, 0]
+  },
+  "exposure": {
+    "sampleStep": 2,
+    "minLuminance": 12,
+    "maxLuminance": 245,
+    "logEpsilon": 4,
+    "iterationCount": 500,
+    "edgeWeightCap": 22000,
+    "maxAbsoluteLogGain": 0.4,
+    "anchorTile": "0,0"
+  },
+  "finalOutput": {
+    "cropLeft": 25,
+    "cropTop": 0,
+    "cropSize": 4387,
+    "width": 4096,
+    "height": 4096,
+    "pngName": "dota-world-topdown-fullbright-manual-mosaic-4096.png",
+    "tgaName": "dota-world-topdown-fullbright-manual-mosaic-4096.tga",
+    "normalizedName": "dota-world-topdown-fullbright-manual-mosaic-normalized.png",
+    "reportName": "dota-world-topdown-fullbright-manual-mosaic-report.json"
+  },
+  "knownLimitations": [
+    "Near-vertical perspective capture; strict orthographic projection is not proven.",
+    "Re-centering over the two high-ground voids does not restore terrain; the occluding visibility or prefab layer must be resolved before repair tiles are valid.",
+    "The installed official map and VPKs do not contain maps/dota.los; Hammer says a local map build is required to generate it.",
+    "Out-of-bounds black geometry beyond the Radiant and Dire bases is intentionally retained."
+  ]
+}
