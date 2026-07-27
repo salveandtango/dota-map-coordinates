@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 2,
+  "profileId": "hammer-world-mosaic-24266061-v1.1",
+  "baseProfileId": "hammer-world-mosaic-24204564-v1",
+  "dotaBuildId": "24266061",
+  "product": "normal-3d-world-render",
+  "mapMode": "official-read-only",
+  "baseProjection": {
+    "pixelsPerWorldUnit": 0.205,
+    "worldOriginPixelX": 2219,
+    "worldOriginPixelY": 2245,
+    "cropLeft": 25,
+    "cropTop": 0,
+    "cropSize": 4387,
+    "outputWidth": 4096,
+    "outputHeight": 4096,
+    "referenceContentWidth": 1568
+  },
+  "capture": {
+    "windowWidth": 1026,
+    "windowHeight": 800,
+    "contentLeft": 1,
+    "contentTop": 30,
+    "contentWidth": 1024,
+    "contentHeight": 768,
+    "renderMode": "Fullbright",
+    "cameraZ": 4000,
+    "pitch": 89.9,
+    "yaw": 0,
+    "roll": 0
+  },
+  "mask": {
+    "blackThreshold": 8,
+    "minimumArea": 3000,
+    "featherSigma": 3,
+    "minimumPatchCoverage": 0.97
+  },
+  "repairs": [
+    {
+      "id": "dire-highground",
+      "tileGridLayer": "dire_base",
+      "captureFile": "dire-base-setpos-5200-4800-z4000-clean.png",
+      "camera": {
+        "x": 5200,
+        "y": 4800,
+        "z": 4000,
+        "pitch": 89.9,
+        "yaw": 0,
+        "roll": 0
+      },
+      "outputOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "radiant-highground",
+      "tileGridLayer": "radiant_base",
+      "captureFile": "radiant-base-setpos--5400--5300-z4000-clean.png",
+      "camera": {
+        "x": -5400,
+        "y": -5300,
+        "z": 4000,
+        "pitch": 89.9,
+        "yaw": 0,
+        "roll": 0
+      },
+      "outputOffset": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "finalOutput": {
+    "pngName": "dota-world-topdown-fullbright-v1.1-highgrounds-4096.png",
+    "tgaName": "dota-world-topdown-fullbright-v1.1-highgrounds-4096.tga",
+    "reportName": "dota-world-topdown-fullbright-v1.1-highgrounds-report.json"
+  },
+  "knownLimitations": [
+    "Near-vertical perspective capture; strict orthographic projection is not proven.",
+    "The two repair captures come from the official read-only Tile Grid base layers, not from minimap assets.",
+    "Boundary-connected black beyond the Radiant and Dire bases is intentionally retained.",
+    "The v1 base mosaic is from build 24204564 while the isolated base-layer repair captures are from build 24266061; provenance is recorded in the report."
+  ]
+}
