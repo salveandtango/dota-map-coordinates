@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://salveandtango.github.io/dota-map-coordinates/contracts/v1/map-manifest.schema.json",
+  "title": "Dota Analysis Map Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mapVersion", "dotaBuild", "inputHashes", "worldBounds", "worldToPixel"],
+  "properties": {
+    "schemaVersion": {"const": "dota-analysis.map-manifest/v1"},
+    "mapVersion": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "dotaBuild": {"type": "string", "minLength": 1},
+    "inputHashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vpkSha256", "gridNavSha256", "rendererRevision"],
+      "properties": {
+        "vpkSha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+        "gridNavSha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+        "rendererRevision": {"type": "string", "minLength": 7}
+      }
+    },
+    "worldBounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["left", "right", "bottom", "top"],
+      "properties": {"left": {"type": "number"}, "right": {"type": "number"}, "bottom": {"type": "number"}, "top": {"type": "number"}}
+    },
+    "worldToPixel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unitsPerPixel", "originWorldX", "originWorldY", "yAxis"],
+      "properties": {
+        "unitsPerPixel": {"type": "number", "exclusiveMinimum": 0},
+        "originWorldX": {"type": "number"},
+        "originWorldY": {"type": "number"},
+        "yAxis": {"const": "down"}
+      }
+    }
+  }
+}
