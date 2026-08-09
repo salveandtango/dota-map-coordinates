@@ -1,8 +1,10 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$OutputPath,
+
+    [ValidateNotNullOrEmpty()]
+    [string]$BatchPlanPath,
 
     [ValidateRange(1, 32768)]
     [int]$PixelWidth = 5120,
@@ -17,6 +19,29 @@ param(
     [double]$SpanX,
 
     [double]$SpanY,
+
+    [ValidateRange(1.0, 1048576.0)]
+    [double]$CameraZ = 16384,
+
+    [ValidateRange(0.0001, 1048576.0)]
+    [double]$NearPlane = 1,
+
+    [ValidateRange(0.0001, 4194304.0)]
+    [double]$FarPlane = 65536,
+
+    [ValidateRange(1, 1000)]
+    [int]$WarmupFrames = 2,
+
+    [ValidateRange(0.0001, 100.0)]
+    [double]$Exposure = 1,
+
+    [ValidateRange(1, 16)]
+    [int]$MsaaSamples = 1,
+
+    [ValidateRange(64, 16384)]
+    [int]$MaxTextureSize = 1024,
+
+    [switch]$ForceHighestLod,
 
     [ValidateNotNullOrEmpty()]
     [string]$VrfRoot = 'C:\Users\70681\Documents\Dota2 Analyze\ValveResourceFormat',
@@ -59,10 +84,44 @@ if (-not [System.IO.Directory]::Exists($resolvedVrfRoot)) {
 $resolvedVpk = Resolve-ExistingFile -LiteralPath $VpkPath -Description 'Dota map VPK'
 $resolvedGnv = Resolve-ExistingFile -LiteralPath $GnvPath -Description 'Dota GridNav file'
 $resolvedDotnet = Resolve-ExistingFile -LiteralPath $DotnetPath -Description '.NET host'
-$resolvedOutput = [System.IO.Path]::GetFullPath($OutputPath)
-$manifestPath = "$resolvedOutput.json"
-if ([System.IO.File]::Exists($resolvedOutput) -or [System.IO.File]::Exists($manifestPath)) {
-    throw "Refusing to overwrite output or manifest: $resolvedOutput"
+$hasOutput = $PSBoundParameters.ContainsKey('OutputPath')
+$hasBatch = $PSBoundParameters.ContainsKey('BatchPlanPath')
+if ($hasOutput -eq $hasBatch) {
+    throw 'Supply exactly one of OutputPath or BatchPlanPath.'
+}
+
+$resolvedOutputs = [System.Collections.Generic.List[string]]::new()
+$resolvedBatchPlan = $null
+if ($hasOutput) {
+    $resolvedOutput = [System.IO.Path]::GetFullPath($OutputPath)
+    $resolvedOutputs.Add($resolvedOutput)
+} else {
+    $resolvedBatchPlan = Resolve-ExistingFile -LiteralPath $BatchPlanPath -Description 'Batch render plan'
+    $batch = Get-Content -Raw -LiteralPath $resolvedBatchPlan | ConvertFrom-Json -Depth 100
+    if ($batch.schemaVersion -ne '1.0.0' -or @($batch.requests).Count -eq 0) {
+        throw 'Batch render plan must use schemaVersion 1.0.0 and contain at least one request.'
+    }
+    $batchDirectory = Split-Path -Parent $resolvedBatchPlan
+    foreach ($request in @($batch.requests)) {
+        if ([string]::IsNullOrWhiteSpace([string]$request.outputPath)) {
+            throw 'Every batch render request must have an outputPath.'
+        }
+        $candidate = if ([System.IO.Path]::IsPathRooted([string]$request.outputPath)) {
+            [string]$request.outputPath
+        } else {
+            Join-Path $batchDirectory ([string]$request.outputPath)
+        }
+        $resolvedOutputs.Add([System.IO.Path]::GetFullPath($candidate))
+    }
+    if (($resolvedOutputs | Sort-Object -Unique).Count -ne $resolvedOutputs.Count) {
+        throw 'Batch render plan contains duplicate output paths.'
+    }
+}
+
+foreach ($candidateOutput in $resolvedOutputs) {
+    if ([System.IO.File]::Exists($candidateOutput) -or [System.IO.File]::Exists("$candidateOutput.json")) {
+        throw "Refusing to overwrite output or manifest: $candidateOutput"
+    }
 }
 
 $projectPath = Join-Path $resolvedVrfRoot 'Misc\DotaOrthographicRender\DotaOrthographicRender.csproj'
@@ -78,8 +137,14 @@ $boundProjectionParameterCount = @(
 if ($boundProjectionParameterCount -ne 0 -and $boundProjectionParameterCount -ne 4) {
     throw 'CenterX, CenterY, SpanX, and SpanY must be supplied together.'
 }
+if ($hasBatch -and $boundProjectionParameterCount -ne 0) {
+    throw 'CenterX, CenterY, SpanX, and SpanY are defined per request in batch mode.'
+}
 if ($boundProjectionParameterCount -eq 4 -and ($SpanX -le 0 -or $SpanY -le 0)) {
     throw 'SpanX and SpanY must be positive.'
+}
+if ($NearPlane -ge $FarPlane) {
+    throw 'NearPlane must be smaller than FarPlane.'
 }
 
 $env:DOTNET_ROOT = Split-Path -Parent $resolvedDotnet
@@ -98,9 +163,11 @@ if (-not [System.IO.File]::Exists($rendererDll)) {
     throw "Renderer DLL not found. Re-run with -Build: $rendererDll"
 }
 
-$outputDirectory = Split-Path -Parent $resolvedOutput
-if ($outputDirectory -and -not [System.IO.Directory]::Exists($outputDirectory)) {
-    [System.IO.Directory]::CreateDirectory($outputDirectory) | Out-Null
+foreach ($candidateOutput in $resolvedOutputs) {
+    $outputDirectory = Split-Path -Parent $candidateOutput
+    if ($outputDirectory -and -not [System.IO.Directory]::Exists($outputDirectory)) {
+        [System.IO.Directory]::CreateDirectory($outputDirectory) | Out-Null
+    }
 }
 
 $invariantCulture = [System.Globalization.CultureInfo]::InvariantCulture
@@ -108,13 +175,26 @@ $renderArguments = @(
     $rendererDll,
     '--vpk', $resolvedVpk,
     '--gnv', $resolvedGnv,
-    '--output', $resolvedOutput,
-    '--pixel-width', $PixelWidth.ToString($invariantCulture),
-    '--pixel-height', $PixelHeight.ToString($invariantCulture),
-    '--warmup-frames', '2',
-    '--exposure', '1',
-    '--msaa-samples', '1'
+    '--camera-z', $CameraZ.ToString($invariantCulture),
+    '--near', $NearPlane.ToString($invariantCulture),
+    '--far', $FarPlane.ToString($invariantCulture),
+    '--warmup-frames', $WarmupFrames.ToString($invariantCulture),
+    '--exposure', $Exposure.ToString($invariantCulture),
+    '--msaa-samples', $MsaaSamples.ToString($invariantCulture),
+    '--max-texture-size', $MaxTextureSize.ToString($invariantCulture)
 )
+if ($hasOutput) {
+    $renderArguments += @(
+        '--output', $resolvedOutput,
+        '--pixel-width', $PixelWidth.ToString($invariantCulture),
+        '--pixel-height', $PixelHeight.ToString($invariantCulture)
+    )
+} else {
+    $renderArguments += @('--batch-plan', $resolvedBatchPlan)
+}
+if ($ForceHighestLod) {
+    $renderArguments += '--force-highest-lod'
+}
 if ($boundProjectionParameterCount -eq 4) {
     $renderArguments += @(
         '--center-x', $CenterX.ToString($invariantCulture),
@@ -129,9 +209,10 @@ if ($LASTEXITCODE -ne 0) {
     throw "Orthographic render failed with exit code $LASTEXITCODE"
 }
 
-if (-not [System.IO.File]::Exists($resolvedOutput) -or -not [System.IO.File]::Exists($manifestPath)) {
-    throw 'Renderer returned success without producing both the PNG and JSON manifest.'
+foreach ($candidateOutput in $resolvedOutputs) {
+    if (-not [System.IO.File]::Exists($candidateOutput) -or -not [System.IO.File]::Exists("$candidateOutput.json")) {
+        throw "Renderer returned success without producing both the PNG and JSON manifest: $candidateOutput"
+    }
+    Write-Output "Rendered: $candidateOutput"
+    Write-Output "Manifest: $candidateOutput.json"
 }
-
-Write-Output "Rendered: $resolvedOutput"
-Write-Output "Manifest: $manifestPath"

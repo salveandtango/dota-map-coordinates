@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { buildTilePlan } from "./tile-stack-common.mjs";
 
 const profilePath = path.resolve(
   process.argv[2] ?? "profiles/build-24204564-v1.json"
@@ -103,6 +104,31 @@ if (config.schemaVersion === 1) {
   assert.equal(config.h5.visualPassed, true);
   process.stdout.write(
     `PASS ${config.profileId}: exact H2/H3, 5120x5248 H4, ${config.h5.landmarkCount}-tower H5\n`
+  );
+} else if (config.schemaVersion === 4) {
+  const plan = buildTilePlan(config);
+  assert.equal(config.routeId, "vrf-strict-orthographic-tile-stack-v1");
+  assert.equal(config.projection.camera.heightControlsScale, false);
+  assert.equal(config.projection.camera.scaleControl,
+    "projection span divided by output pixels");
+  assert.equal(plan.mosaic.width,
+    (config.projection.worldBounds.right - config.projection.worldBounds.left)
+      / config.projection.unitsPerPixel);
+  assert.equal(plan.mosaic.height,
+    (config.projection.worldBounds.top - config.projection.worldBounds.bottom)
+      / config.projection.unitsPerPixel);
+  assert.equal(plan.tiles.length, plan.mosaic.rows * plan.mosaic.columns);
+  assert.ok(plan.adjacency.length > 0);
+  for (const tile of plan.tiles) {
+    assert.equal(tile.render.pixelWidth,
+      tile.core.sourceRect.width + config.tiling.overscanPixels * 2);
+    assert.equal(tile.render.pixelHeight,
+      tile.core.sourceRect.height + config.tiling.overscanPixels * 2);
+    assert.equal(tile.core.sourceRect.left, config.tiling.overscanPixels);
+    assert.equal(tile.core.sourceRect.top, config.tiling.overscanPixels);
+  }
+  process.stdout.write(
+    `PASS ${config.profileId}: ${plan.tiles.length} tiles, ${plan.mosaic.width}x${plan.mosaic.height} at ${config.projection.unitsPerPixel} world units/pixel\n`
   );
 } else {
   assert.fail(`Unsupported schemaVersion: ${config.schemaVersion}`);
