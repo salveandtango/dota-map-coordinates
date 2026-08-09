@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 4,
+  "profileId": "dota-vrf-tile-stack-24266061-v1",
+  "routeId": "vrf-strict-orthographic-tile-stack-v1",
+  "baseProfileId": "dota-vrf-orthographic-24266061-v1",
+  "dotaBuildId": "24266061",
+  "sourceRevision": "10832812",
+  "product": "normal-3d-world-render",
+  "inputs": {
+    "mapVpk": {
+      "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dota 2 beta\\game\\dota\\maps\\dota.vpk",
+      "sha256": "E6D3E05E0A3387C55C997442C254A9114C3BEE58BB0F68C24565E1DAF5094765"
+    },
+    "gridNav": {
+      "path": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\artifacts\\24266061\\vrf\\inputs\\maps\\dota.gnv",
+      "sha256": "3102E4B86C93D13AED9BF26B10F525F1B32574FAADAD6118F702EBD34822B5C5"
+    }
+  },
+  "renderer": {
+    "wrapperPath": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\scripts\\hammer-world-mosaic\\Invoke-VrfOrthographicRender.ps1",
+    "vrfRoot": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\ValveResourceFormat",
+    "dotnetPath": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\.work\\dotnet-sdk-10.0.302\\dotnet.exe",
+    "manifestRoute": "vrf-strict-orthographic-canonical-canvas-v1"
+  },
+  "renderingQuality": {
+    "maxTextureSize": 2048,
+    "forceHighestLod": true
+  },
+  "projection": {
+    "type": "orthographic-reverse-z",
+    "orientation": {
+      "imageRight": "world +X",
+      "imageDown": "world -Y"
+    },
+    "worldBounds": {
+      "left": -10240,
+      "right": 10240,
+      "bottom": -10752,
+      "top": 10240
+    },
+    "unitsPerPixel": 1,
+    "camera": {
+      "z": 16384,
+      "near": 1,
+      "far": 65536,
+      "warmupFrames": 2,
+      "exposure": 1,
+      "msaaSamples": 1,
+      "heightControlsScale": false,
+      "scaleControl": "projection span divided by output pixels"
+    }
+  },
+  "tiling": {
+    "coreWidthPixels": 2048,
+    "coreHeightPixels": 2048,
+    "overscanPixels": 128,
+    "traversal": "row-major-top-left",
+    "stitchMode": "hard-core-crop"
+  },
+  "validation": {
+    "requireInputHashes": true,
+    "maxOverlapMismatchRatio": 0.005,
+    "maxMeanAbsoluteRgbChannelDelta": 0.25,
+    "requireAllTilesForStitch": true
+  }
+}

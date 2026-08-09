@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 3,
+  "profileId": "dota-vrf-orthographic-24503204-v1",
+  "routeId": "vrf-strict-orthographic-canonical-canvas-v1",
+  "dotaBuildId": "24503204",
+  "sourceRevision": "10875429",
+  "product": "normal-3d-world-render",
+  "mapMode": "official-read-only",
+  "inputs": {
+    "sourceVmap": {
+      "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dota 2 beta\\content\\dota\\maps\\dota.vmap",
+      "sha256": "D104CED56898670BB357BE767399738755D288EF34D87D855FEED07D2FAE9C51"
+    },
+    "mapVpk": {
+      "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dota 2 beta\\game\\dota\\maps\\dota.vpk",
+      "sha256": "E6D3E05E0A3387C55C997442C254A9114C3BEE58BB0F68C24565E1DAF5094765"
+    },
+    "gridNav": {
+      "path": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\artifacts\\24503204\\vrf\\inputs\\maps\\dota.gnv",
+      "sha256": "3102E4B86C93D13AED9BF26B10F525F1B32574FAADAD6118F702EBD34822B5C5",
+      "edgeSize": 64,
+      "width": 320,
+      "height": 328,
+      "minX": -160,
+      "minY": -168,
+      "maxX": 159,
+      "maxY": 159
+    }
+  },
+  "renderer": {
+    "repository": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\ValveResourceFormat",
+    "branch": "codex/dota-orthographic-renderer",
+    "baseCommit": "148061a1ba6f1277f92ddaf0338e78fac81cfb4a",
+    "programSha256": "27243B5A08056242BC817E9BAB96F8219D61001B1F90D91DAE7DE5FC0CA24AD2",
+    "workingDiffGitBlob": "721da2f32e4aded640c9977814d3c1b8371b3ecf",
+    "singleRenderEvidenceProgramSha256": "E9AFD9942F4B14B22151E8CD1042872DC68BFB4FF22036C4D9E2FB10583C9544",
+    "project": "Misc/DotaOrthographicRender/DotaOrthographicRender.csproj",
+    "wrapper": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\scripts\\hammer-world-mosaic\\Invoke-VrfOrthographicRender.ps1",
+    "manifestRoutes": {
+      "evidenceCapturedAs": "vrf-strict-orthographic-v1",
+      "current": "vrf-strict-orthographic-canonical-canvas-v1",
+      "note": "The renderer writes the canonical route; the legacy evidence label is retained for schema-3 audit compatibility."
+    }
+  },
+  "deterministicSettings": {
+    "projection": "orthographic-reverse-z",
+    "cameraPosition": [0, 0, 16384],
+    "cameraPitchRadians": -1.5707964,
+    "cameraYawRadians": 1.5707964,
+    "near": 1,
+    "far": 65536,
+    "warmupFrames": 2,
+    "fixedTimestep": 0,
+    "exposure": 1,
+    "msaaSamples": 1,
+    "hdrColorFormat": "RGBA32F",
+    "ditheringEnabled": false,
+    "bloomEnabled": false,
+    "colorCorrectionEnabled": false,
+    "dynamicShadowsEnabled": false,
+    "deterministicMaterialSortIds": true,
+    "fogEnabled": false,
+    "pvsCullingEnabled": false,
+    "occlusionCullingEnabled": false,
+    "compactionEnabled": false,
+    "suppressedLayers": ["Tool Entities", "Entity Connections", "Particles"]
+  },
+  "h2h3": {
+    "artifactDirectory": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\artifacts\\24503204\\vrf\\20260803-020556-h2-h5-build-validation-v1",
+    "canonicalCanvas": {
+      "width": 1280,
+      "height": 1024,
+      "centerX": 512,
+      "centerY": 0,
+      "spanX": 5120,
+      "spanY": 4096,
+      "unitsPerPixel": 4,
+      "independentRenderCount": 2
+    },
+    "crops": {
+      "origin": { "left": 0, "top": 0, "width": 1024, "height": 1024 },
+      "neighbor": { "left": 256, "top": 0, "width": 1024, "height": 1024 }
+    },
+    "h2": {
+      "passed": true,
+      "canonicalComparedPixels": 1310720,
+      "originComparedPixels": 1048576,
+      "neighborComparedPixels": 1048576,
+      "mismatchPixels": 0,
+      "decodedContentSha256": "C3D309ECB4F7DFFF9F1BAB819671459AF19F6B90579F2598915F636D12F2765B"
+    },
+    "h3": {
+      "passed": true,
+      "trials": 2,
+      "dx": -256,
+      "dy": 0,
+      "overlapPixelsPerTrial": 786432,
+      "mismatchPixelsPerTrial": 0,
+      "method": "integer crops from two independently rendered canonical parent canvases"
+    }
+  },
+  "h4": {
+    "passed": true,
+    "artifactDirectory": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\artifacts\\24503204\\vrf\\20260803-020556-h2-h5-build-validation-v1",
+    "image": {
+      "path": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\artifacts\\24503204\\vrf\\20260803-020556-h2-h5-build-validation-v1\\full-a-5120x5248.png",
+      "width": 5120,
+      "height": 5248,
+      "fileSha256": "27F8EEF2EF2B635C4A1329F2790F2E1A61C72A0F38B4EF081954593B500873B3",
+      "decodedContentSha256": "72E2FEF85E382883036FC5AD4C92E1EB25E5B0270D1404548C7178431D5F11E0"
+    },
+    "imageManifest": {
+      "path": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\artifacts\\24503204\\vrf\\20260803-020556-h2-h5-build-validation-v1\\full-a-5120x5248.png.json",
+      "sha256": "D90F3D2BF512BB3627EC92E2E8B123FFF143AB61AF51577A03505C5D0E1EBC2A"
+    },
+    "worldBounds": {
+      "left": -10240,
+      "right": 10240,
+      "bottom": -10752,
+      "top": 10240,
+      "unitsPerPixel": 4
+    },
+    "repeatComparedPixels": 26869760,
+    "repeatMismatchPixels": 0,
+    "normalHighgroundsVisible": true,
+    "boundaryConnectedExteriorBlackRetained": true,
+    "previousBuildComparison": {
+      "buildId": "24266061",
+      "mismatchPixels": 38685,
+      "mismatchRatio": 0.0014397225728849086,
+      "reusedAsCurrentAsset": false
+    }
+  },
+  "h5": {
+    "passed": true,
+    "reportPath": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\artifacts\\24503204\\vrf\\20260803-020556-h2-h5-build-validation-v1\\h5-tower-validation\\validation-report.json",
+    "reportSha256": "39EEE6ABC8766F9AE8878B1CA077BCD6407A88B5473246A63A2E3E527B36EEF8",
+    "worldToPixelPath": "C:\\Users\\70681\\Documents\\Dota2 Analyze\\dota-map-coordinates\\artifacts\\24503204\\vrf\\20260803-020556-h2-h5-build-validation-v1\\world_to_pixel.json",
+    "worldToPixelSha256": "FF6F2282981ADECA0E41E586D8840B80A363934AA18B46B104A81E71FC381058",
+    "landmarkClass": "npc_dota_tower",
+    "landmarkCount": 22,
+    "requiredLandmarkCount": 20,
+    "automaticPassed": true,
+    "visualPassed": true,
+    "maximumRoundedPixelWorldError": 2.3990375153382346,
+    "allowedWorldError": 64
+  },
+  "batchEquivalence": {
+    "passed": true,
+    "sameSizeTrialCount": 2,
+    "framebufferResizeTrialCount": 1,
+    "mismatchPixels": 0,
+    "sameSizeReportSha256": [
+      "90FC46DD9BEB6EE6D113AB55BB1B0FDF524C870A9D6318E0C20F0B613C0F8539",
+      "29682848B6D1EE95B9139208B9A0686206B27F6FA0930B0CC79100EC2DF77910"
+    ],
+    "resizeReportSha256": "EBAAF79027C761649B42C690E31D2E76721F1CD809DE6EF5D3505306BC0B497B"
+  },
+  "invalidationRules": [
+    "Re-run all gates when the Dota build, map VPK hash, GridNav hash, renderer source, or deterministic setting changes.",
+    "Do not reuse build 24266061 raster assets as build 24503204 assets; the full-map comparison found 38,685 changed pixels.",
+    "Do not replace this normal-world render with minimap or overview assets."
+  ]
+}

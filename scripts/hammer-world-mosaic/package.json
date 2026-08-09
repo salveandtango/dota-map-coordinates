@@ -10,7 +10,19 @@
     "stitch": "node stitch-world-mosaic.mjs",
     "repair-highgrounds": "node repair-highgrounds.mjs",
     "audit-vrf": "node validate-vrf-profile.mjs profiles/build-24266061-vrf-orthographic-v1.json",
-    "self-test": "node self-test.mjs && node self-test.mjs profiles/build-24266061-v1.1.json && node self-test.mjs profiles/build-24266061-vrf-orthographic-v1.json"
+    "audit-vrf-current": "node validate-vrf-profile-v4.mjs profiles/build-24503204-vrf-orthographic-v2.json",
+    "tile-plan": "node generate-orthographic-tile-plan.mjs",
+    "camera-sweep-compare": "node compare-camera-sweep.mjs",
+    "detail-compare": "node create-orthographic-detail-comparison.mjs",
+    "tile-overlaps": "node validate-orthographic-tile-overlaps.mjs",
+    "tile-stitch": "node stitch-orthographic-tile-stack.mjs",
+    "tile-export-z5": "node export-z5-browser-tiles.mjs",
+    "tile-package-z5": "node build-native-z5-map-package.mjs",
+    "self-test-tile-package-edge": "node self-test-native-z5-package-edge.mjs",
+    "tile-overlap-diagnostic": "node create-overlap-diagnostic.mjs",
+    "image-exact-compare": "node compare-orthographic-images.mjs",
+    "tile-plan-render-equivalence": "node validate-tile-plan-render-equivalence.mjs",
+    "self-test": "node self-test.mjs && node self-test.mjs profiles/build-24266061-v1.1.json && node self-test.mjs profiles/build-24266061-vrf-orthographic-v1.json && node self-test.mjs profiles/build-24266061-vrf-tile-stack-v1.json && node self-test.mjs profiles/build-24266061-vrf-tile-stack-smoke-v1.json && node self-test.mjs profiles/build-24503204-vrf-orthographic-v1.json && node self-test.mjs profiles/build-24503204-vrf-z5-full-v1.json && node self-test.mjs profiles/build-24503204-vrf-z5-full-v2.json && node self-test.mjs profiles/build-24503204-vrf-z5-full-v3.json"
   },
   "dependencies": {
     "sharp": "0.35.3"
