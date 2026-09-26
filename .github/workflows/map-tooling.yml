@@ -1,0 +1,43 @@
+name: Map tooling contracts
+on:
+  pull_request:
+    branches: [master]
+    paths: ['scripts/hammer-world-mosaic/**', '.github/workflows/map-tooling.yml']
+  push:
+    branches: [master]
+    paths: ['scripts/hammer-world-mosaic/**', '.github/workflows/map-tooling.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-contracts:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: scripts/hammer-world-mosaic
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm.cmd ci --no-audit --fund=false
+      - name: Parse PowerShell entry points
+        run: |
+          foreach ($script in @('Invoke-VrfOrthographicRender.ps1', 'Invoke-VrfOrthographicTileStack.ps1', 'Invoke-VrfOrthographicCameraSweep.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            $null = [Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $script), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
+          }
+      - name: Historical profile contracts
+        run: npm.cmd run self-test
+      - name: Execution identity and real PowerShell resume guards
+        run: npm.cmd run self-test-renderer-identity
+      - name: Native edge packaging
+        run: npm.cmd run self-test-tile-package-edge
+      - name: Interrupted package recovery
+        run: npm.cmd run self-test-tile-package-resume
+      # Logs contain the small JSON report. Do not upload maps or large Actions
+      # artifacts; these tests generate only synthetic fixtures under OS temp.

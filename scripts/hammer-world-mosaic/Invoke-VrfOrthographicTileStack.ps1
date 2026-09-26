@@ -54,6 +54,11 @@ function Test-RawTileManifest {
         return $false
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
+    if (-not $manifest.PSObject.Properties['rendererExecution'] `
+        -or $manifest.rendererExecution.contract -cne 'vrf-renderer-execution-identity-v1' `
+        -or $manifest.rendererExecution.receiptSha256 -ne $Profile.renderer.identity.sha256) {
+        return $false
+    }
     $imageHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ImagePath).Hash
     return $manifest.route -eq $Profile.renderer.manifestRoute `
         -and $manifest.image.width -eq $Tile.render.pixelWidth `
@@ -139,6 +144,15 @@ if ($PlanOnly) {
     Write-Output "Tiles: $($plan.mosaic.tileCount), mosaic: $($plan.mosaic.width)x$($plan.mosaic.height)"
     return
 }
+if ($profile.schemaVersion -ne 5 -or $profile.routeId -cne 'vrf-strict-orthographic-tile-stack-v2') {
+    throw 'Legacy tile profiles are read-only. Use a new schemaVersion 5 / tile-stack-v2 profile with a sealed renderer identity.'
+}
+if ($Build) {
+    throw 'Build/seal the renderer before freezing a tile profile. Never rebuild while resuming a frozen tile run.'
+}
+$identityTool = Join-Path $scriptRoot 'renderer-identity.mjs'
+& node.exe $identityTool verify $profile.renderer.identity.path $profile.renderer.vrfRoot $profile.renderer.dotnetPath $profile.renderer.identity.sha256
+if ($LASTEXITCODE -ne 0) { throw 'Tile renderer identity does not match the frozen profile.' }
 
 if ($profile.validation.requireInputHashes) {
     $vpkHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $profile.inputs.mapVpk.path).Hash
@@ -239,6 +253,8 @@ if ($Batch) {
             VpkPath = [string]$profile.inputs.mapVpk.path
             GnvPath = [string]$profile.inputs.gridNav.path
             DotnetPath = [string]$profile.renderer.dotnetPath
+            RendererIdentityPath = [string]$profile.renderer.identity.path
+            RendererIdentitySha256 = [string]$profile.renderer.identity.sha256
         }
         if ([bool]$profile.renderingQuality.forceHighestLod) {
             $batchParameters.ForceHighestLod = $true
@@ -298,6 +314,8 @@ foreach ($tile in $selectedTiles) {
             VpkPath = [string]$profile.inputs.mapVpk.path
             GnvPath = [string]$profile.inputs.gridNav.path
             DotnetPath = [string]$profile.renderer.dotnetPath
+            RendererIdentityPath = [string]$profile.renderer.identity.path
+            RendererIdentitySha256 = [string]$profile.renderer.identity.sha256
         }
         if ([bool]$profile.renderingQuality.forceHighestLod) {
             $renderParameters.ForceHighestLod = $true
@@ -311,6 +329,9 @@ foreach ($tile in $selectedTiles) {
         }
         $buildPending = $false
         $rendered = $true
+        if (-not (Test-RawTileManifest -ImagePath $rawPath -Tile $tile -Profile $profile)) {
+            throw "Renderer produced an invalid tile: $($tile.id)"
+        }
     }
 
     $coreValid = Test-CoreTileManifest -ImagePath $corePath -RawImagePath $rawPath -Tile $tile
@@ -348,10 +369,13 @@ foreach ($tile in $selectedTiles) {
 }
 
 $summaryPath = Join-Path $resolvedOutput 'capture-summary.json'
+& node.exe $identityTool verify $profile.renderer.identity.path $profile.renderer.vrfRoot $profile.renderer.dotnetPath $profile.renderer.identity.sha256
+if ($LASTEXITCODE -ne 0) { throw 'Renderer identity drifted while resuming tiles; capture summary refused.' }
 Write-JsonFile -Path $summaryPath -Value ([ordered]@{
-    schemaVersion = '1.0.0'
+    schemaVersion = '2.0.0'
     route = $profile.routeId
     profile = [ordered]@{ path = $resolvedProfile; sha256 = $profileHash }
+    rendererIdentity = $profile.renderer.identity
     plan = $planPath
     projectionSemantics = [ordered]@{
         cameraHeightControlsScale = $false

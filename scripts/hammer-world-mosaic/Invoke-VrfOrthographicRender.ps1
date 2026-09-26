@@ -55,11 +55,25 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$DotnetPath = 'C:\Users\70681\Documents\Dota2 Analyze\.work\dotnet-sdk-10.0.302\dotnet.exe',
 
+    [string]$RendererIdentityPath,
+
+    [string]$RendererIdentitySha256,
+
     [switch]$Build
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$identityTool = Join-Path $PSScriptRoot 'renderer-identity.mjs'
+if ([string]::IsNullOrWhiteSpace($RendererIdentityPath)) {
+    throw 'RendererIdentityPath is required. Build/seal a new renderer identity; legacy captures remain read-only.'
+}
+$resolvedIdentity = [System.IO.Path]::GetFullPath($RendererIdentityPath)
+foreach ($variable in @('DOTNET_ADDITIONAL_DEPS', 'DOTNET_SHARED_STORE', 'DOTNET_STARTUP_HOOKS')) {
+    if ([Environment]::GetEnvironmentVariable($variable)) {
+        throw "External runtime override is not covered by renderer identity: $variable"
+    }
+}
 
 function Resolve-ExistingFile {
     param(
@@ -153,15 +167,18 @@ $env:DOTNET_NOLOGO = '1'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 
 if ($Build) {
-    & $resolvedDotnet build $projectPath --configuration Release --nologo
+    & node.exe $identityTool build $resolvedIdentity $resolvedVrfRoot $resolvedDotnet
     if ($LASTEXITCODE -ne 0) {
-        throw "Renderer build failed with exit code $LASTEXITCODE"
+        throw "Renderer build/identity seal failed with exit code $LASTEXITCODE"
     }
 }
 
 if (-not [System.IO.File]::Exists($rendererDll)) {
     throw "Renderer DLL not found. Re-run with -Build: $rendererDll"
 }
+$identityJson = & node.exe $identityTool verify $resolvedIdentity $resolvedVrfRoot $resolvedDotnet $RendererIdentitySha256
+if ($LASTEXITCODE -ne 0) { throw 'Renderer execution identity verification failed before launch.' }
+$rendererExecution = $identityJson | ConvertFrom-Json
 
 foreach ($candidateOutput in $resolvedOutputs) {
     $outputDirectory = Split-Path -Parent $candidateOutput
@@ -172,6 +189,8 @@ foreach ($candidateOutput in $resolvedOutputs) {
 
 $invariantCulture = [System.Globalization.CultureInfo]::InvariantCulture
 $renderArguments = @(
+    'exec', '--fx-version', [string]$rendererExecution.frameworkVersion,
+    '--roll-forward', 'Disable',
     $rendererDll,
     '--vpk', $resolvedVpk,
     '--gnv', $resolvedGnv,
@@ -208,11 +227,20 @@ if ($boundProjectionParameterCount -eq 4) {
 if ($LASTEXITCODE -ne 0) {
     throw "Orthographic render failed with exit code $LASTEXITCODE"
 }
+$afterIdentityJson = & node.exe $identityTool verify $resolvedIdentity $resolvedVrfRoot $resolvedDotnet $rendererExecution.receiptSha256
+if ($LASTEXITCODE -ne 0) { throw 'Renderer execution identity drifted during capture; output is not resumable.' }
+$afterExecution = $afterIdentityJson | ConvertFrom-Json
+if ($afterExecution.fingerprint -cne $rendererExecution.fingerprint) { throw 'Renderer identity changed during capture.' }
 
 foreach ($candidateOutput in $resolvedOutputs) {
     if (-not [System.IO.File]::Exists($candidateOutput) -or -not [System.IO.File]::Exists("$candidateOutput.json")) {
         throw "Renderer returned success without producing both the PNG and JSON manifest: $candidateOutput"
     }
+    $manifest = Get-Content -LiteralPath "$candidateOutput.json" -Raw | ConvertFrom-Json -AsHashtable
+    if ($manifest.ContainsKey('rendererExecution')) { throw 'Unexpected pre-existing execution identity in new renderer manifest.' }
+    $manifest.rendererExecution = $rendererExecution
+    $json = $manifest | ConvertTo-Json -Depth 100
+    [System.IO.File]::WriteAllText("$candidateOutput.json", "$json`n", [System.Text.UTF8Encoding]::new($false))
     Write-Output "Rendered: $candidateOutput"
     Write-Output "Manifest: $candidateOutput.json"
 }

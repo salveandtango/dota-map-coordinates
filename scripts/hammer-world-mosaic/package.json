@@ -20,6 +20,7 @@
     "tile-package-z5": "node build-native-z5-map-package.mjs",
     "self-test-tile-package-edge": "node self-test-native-z5-package-edge.mjs",
     "self-test-tile-package-resume": "node self-test-native-z5-package-resume.mjs",
+    "self-test-renderer-identity": "node self-test-renderer-identity.mjs",
     "tile-overlap-diagnostic": "node create-overlap-diagnostic.mjs",
     "image-exact-compare": "node compare-orthographic-images.mjs",
     "tile-plan-render-equivalence": "node validate-tile-plan-render-equivalence.mjs",

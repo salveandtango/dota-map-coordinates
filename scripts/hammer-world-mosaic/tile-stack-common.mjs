@@ -38,9 +38,15 @@ function positiveInteger(value, label) {
 }
 
 export function validateTileProfile(profile) {
-  assert.equal(profile.schemaVersion, 4);
+  assert.ok([4, 5].includes(profile.schemaVersion), 'Unsupported tile profile schema');
   assert.equal(profile.product, "normal-3d-world-render");
-  assert.equal(profile.routeId, "vrf-strict-orthographic-tile-stack-v1");
+  assert.equal(profile.routeId, `vrf-strict-orthographic-tile-stack-v${profile.schemaVersion === 5 ? 2 : 1}`);
+  if (profile.schemaVersion === 5) {
+    assert.equal(typeof profile.renderer.identity.path, 'string');
+    assert.ok(profile.renderer.identity.path.length > 0);
+    assert.match(profile.renderer.identity.sha256, /^[A-Fa-f0-9]{64}$/);
+    assert.equal(profile.validation.requireInputHashes, true);
+  }
   assert.equal(profile.projection.type, "orthographic-reverse-z");
   assert.equal(profile.projection.orientation.imageRight, "world +X");
   assert.equal(profile.projection.orientation.imageDown, "world -Y");

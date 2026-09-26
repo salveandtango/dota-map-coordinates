@@ -5,6 +5,7 @@ import path from "node:path";
 import process from "node:process";
 import sharp from "sharp";
 import { exists, readJson, resolvePlanPath, sha256 } from "./tile-stack-common.mjs";
+import { validateCapturedTileIdentity } from './renderer-identity.mjs';
 
 function parseArguments(argv) {
   const values = new Map();
@@ -39,7 +40,7 @@ function stableAggregate(entries) {
 }
 
 async function validateInputs(planPath, plan, seamReportPath, seamReport) {
-  assert.equal(plan.route, "vrf-strict-orthographic-tile-stack-v1");
+  assert.ok(['vrf-strict-orthographic-tile-stack-v1', 'vrf-strict-orthographic-tile-stack-v2'].includes(plan.route));
   assert.equal(plan.projection.type, "orthographic-reverse-z");
   assert.equal(plan.projection.unitsPerPixel, 0.5);
   assert.equal(plan.projection.camera.z, 16384);
@@ -68,7 +69,7 @@ async function validateInputs(planPath, plan, seamReportPath, seamReport) {
   }
 }
 
-async function validateCore(planPath, tile) {
+async function validateCore(planPath, plan, tile) {
   const corePath = resolvePlanPath(planPath, tile.coreImage);
   const manifestPath = `${corePath}.json`;
   if (!await exists(corePath) || !await exists(manifestPath)) {
@@ -82,6 +83,8 @@ async function validateCore(planPath, tile) {
   assert.equal(manifest.crop.width, tile.core.sourceRect.width);
   assert.equal(manifest.crop.height, tile.core.sourceRect.height);
   assert.equal(manifest.output.sha256, await sha256(corePath));
+  const rawHash = await validateCapturedTileIdentity(planPath, plan, tile);
+  if (rawHash) assert.equal(manifest.input.sha256.toUpperCase(), rawHash, 'Core/raw identity mismatch');
   return corePath;
 }
 
@@ -108,7 +111,7 @@ async function main() {
   try {
     for (let index = 0; index < plan.tiles.length; index += 1) {
       const tile = plan.tiles[index];
-      const corePath = await validateCore(args.planPath, tile);
+      const corePath = await validateCore(args.planPath, plan, tile);
       const destination = tile.core.destinationRect;
       assert.equal(destination.left % 512, 0);
       assert.equal(destination.top % 512, 0);

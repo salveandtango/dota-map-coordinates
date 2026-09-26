@@ -19,6 +19,13 @@ $invariant = [System.Globalization.CultureInfo]::InvariantCulture
 $profilePathResolved = [System.IO.Path]::GetFullPath($ProfilePath)
 $outputResolved = [System.IO.Path]::GetFullPath($OutputDirectory)
 $profile = Get-Content -LiteralPath $profilePathResolved -Raw | ConvertFrom-Json -Depth 100
+if (-not $profile.renderer.PSObject.Properties['identity']) {
+    throw 'Legacy camera profiles are read-only. Freeze a new profile with renderer.identity before capture/resume.'
+}
+if ($Build) { throw 'Build/seal renderer identity before freezing a camera profile; never rebuild inside a sweep.' }
+$identityTool = Join-Path $PSScriptRoot 'renderer-identity.mjs'
+& node.exe $identityTool verify $profile.renderer.identity.path $profile.renderer.vrfRoot $profile.renderer.dotnetPath $profile.renderer.identity.sha256
+if ($LASTEXITCODE -ne 0) { throw 'Camera sweep renderer identity drift.' }
 $wrapper = [System.IO.Path]::GetFullPath($profile.renderer.wrapperPath)
 [System.IO.Directory]::CreateDirectory($outputResolved) | Out-Null
 
@@ -43,6 +50,11 @@ function Assert-ResumeManifest {
     if ([string]$Manifest.route -cne [string]$profile.renderer.manifestRoute) {
         throw "Resume manifest route mismatch: $($Manifest.route)"
     }
+    if (-not $Manifest.PSObject.Properties['rendererExecution'] `
+        -or $Manifest.rendererExecution.contract -cne 'vrf-renderer-execution-identity-v1' `
+        -or $Manifest.rendererExecution.receiptSha256 -ne $profile.renderer.identity.sha256) {
+        throw 'Resume renderer identity mismatch; legacy captures cannot be adopted.'
+    }
     if ([int]$Manifest.image.width -ne $PixelWidth -or [int]$Manifest.image.height -ne $PixelHeight) {
         throw "Resume image dimensions mismatch for $ImagePath"
     }
@@ -66,8 +78,8 @@ function Assert-ResumeManifest {
         throw "Resume grid-nav hash mismatch for $ImagePath"
     }
 
-    Assert-NearlyEqual ([double]$Manifest.camera.position[0]) $CenterX 'camera.position.x'
-    Assert-NearlyEqual ([double]$Manifest.camera.position[1]) $CenterY 'camera.position.y'
+    Assert-NearlyEqual ([double]$Manifest.camera.position[0]) 0 'camera.position.x'
+    Assert-NearlyEqual ([double]$Manifest.camera.position[1]) 0 'camera.position.y'
     Assert-NearlyEqual ([double]$Manifest.camera.position[2]) $ExpectedCameraZ 'camera.position.z'
     Assert-NearlyEqual ([double]$Manifest.camera.projectionWindowCenter[0]) $CenterX 'camera.projectionWindowCenter.x'
     Assert-NearlyEqual ([double]$Manifest.camera.projectionWindowCenter[1]) $CenterY 'camera.projectionWindowCenter.y'
@@ -154,6 +166,8 @@ foreach ($height in $cameraHeights) {
             VpkPath = [string]$profile.inputs.mapVpk.path
             GnvPath = [string]$profile.inputs.gridNav.path
             DotnetPath = [string]$profile.renderer.dotnetPath
+            RendererIdentityPath = [string]$profile.renderer.identity.path
+            RendererIdentitySha256 = [string]$profile.renderer.identity.sha256
         }
         if ([bool]$profile.renderingQuality.forceHighestLod) { $parameters.ForceHighestLod = $true }
         if ($buildPending) { $parameters.Build = $true }
@@ -172,9 +186,12 @@ foreach ($height in $cameraHeights) {
 }
 
 $distinctHashes = @($renders.imageSha256 | Sort-Object -Unique)
+& node.exe $identityTool verify $profile.renderer.identity.path $profile.renderer.vrfRoot $profile.renderer.dotnetPath $profile.renderer.identity.sha256
+if ($LASTEXITCODE -ne 0) { throw 'Camera sweep renderer identity drifted during capture/resume.' }
 $summary = [ordered]@{
-    schemaVersion = '1.0.0'
-    route = 'vrf-orthographic-camera-height-sweep-v1'
+    schemaVersion = '2.0.0'
+    route = 'vrf-orthographic-camera-height-sweep-v2'
+    rendererIdentity = $profile.renderer.identity
     profile = [ordered]@{
         path = $profilePathResolved
         sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $profilePathResolved).Hash

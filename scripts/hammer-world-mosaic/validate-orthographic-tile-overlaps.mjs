@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import sharp from "sharp";
+import { validateCapturedTileIdentity } from './renderer-identity.mjs';
 import {
   exists,
   intersection,
@@ -143,6 +144,7 @@ const planHash = await sha256(options.planPath);
 const tileById = new Map(plan.tiles.map((tile) => [tile.id, tile]));
 const pairs = [];
 const missingPairs = [];
+const verifiedTiles = new Set();
 
 for (const adjacent of plan.adjacency) {
   const firstTile = tileById.get(adjacent.first);
@@ -155,6 +157,12 @@ for (const adjacent of plan.adjacency) {
       throw new Error(`Missing adjacent tile(s): ${adjacent.first}, ${adjacent.second}`);
     }
     continue;
+  }
+  for (const tile of [firstTile, secondTile]) {
+    if (!verifiedTiles.has(tile.id)) {
+      await validateCapturedTileIdentity(options.planPath, plan, tile);
+      verifiedTiles.add(tile.id);
+    }
   }
   const commonRect = intersection(
     firstTile.render.globalPixelRect,
