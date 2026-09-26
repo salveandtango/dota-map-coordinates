@@ -203,8 +203,7 @@ export async function buildFromZ5(z5Root, pendingRoot, level) {
   return entries;
 }
 
-async function main() {
-  const args = parseArguments(process.argv.slice(2));
+export async function buildPackage(args) {
   if (await exists(args.outputRoot)) throw new Error(`Output already exists: ${args.outputRoot}`);
   const manifestPath = path.join(args.outputRoot, "tile-manifest.json");
   const pendingRoot = args.pendingRoot ?? `${args.outputRoot}.pending`;
@@ -322,13 +321,15 @@ async function main() {
     await rename(pendingRoot, args.outputRoot);
     process.stdout.write(`${JSON.stringify({ status: "ok", manifest: manifestPath, assetRevision, levels: levelEntries }, null, 2)}\n`);
   } catch (error) {
-    await rm(pendingRoot, { recursive: true, force: true });
+    // A transient missing source / disk error must not discard completed tiles.
+    // The next invocation checks build-state identity before resuming this root.
+    process.stderr.write(`Build interrupted; resumable output retained at ${pendingRoot}\n`);
     throw error;
   }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch((error) => {
+  buildPackage(parseArguments(process.argv.slice(2))).catch((error) => {
     process.stderr.write(`${error.stack || error}\n`);
     process.exitCode = 1;
   });
