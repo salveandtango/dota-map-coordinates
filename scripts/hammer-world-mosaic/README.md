@@ -1,5 +1,54 @@
 # Dota 2 normal-world basemap pipelines
 
+## Current capture entry contract (2026-09-26)
+
+New capture/resume requires a sealed **actual renderer execution identity**.
+Historical profiles and images remain unchanged and available for read-only
+audit/repackaging. Do not backfill the new identity onto historical images.
+The old capture commands below document historical runs; use the current
+identity prerequisite before attempting any new capture.
+
+Build once (non-incremental, no GPU rendering) with already-restored dependencies, writing the
+receipt outside the renderer source/binary directories:
+
+```powershell
+node.exe .\renderer-identity.mjs build '<new-run>\renderer-identity.json' '<VRF checkout>' '<pinned SDK>\dotnet.exe'
+node.exe .\renderer-identity.mjs verify '<new-run>\renderer-identity.json' '<VRF checkout>' '<pinned SDK>\dotnet.exe'
+```
+
+The receipt binds tracked/non-ignored source contents, actual renderer and
+dependency bytes, .deps/runtimeconfig files, the dotnet host, hostfxr and
+installed framework bytes. A successful build is observed before sealing;
+source drift during the build fails. The runtime framework is explicitly pinned
+when launching the renderer. External startup/dependency overrides are refused.
+
+For a standalone canonical capture, add
+`-RendererIdentityPath '<new-run>\renderer-identity.json'` and optionally
+`-RendererIdentitySha256 '<receipt SHA256>'` to the wrapper. For a tile stack,
+freeze a **new** profile with `schemaVersion: 5`,
+`routeId: vrf-strict-orthographic-tile-stack-v2`, and
+`renderer.identity: { path, sha256 }`. Keep `requireInputHashes: true`.
+Current-build input hashes, geometry and H2–H5 evidence must be established
+separately; cloning an old build label is not a new Gate.
+
+Build/seal **before** freezing a tile/sweep profile; `-Build` is deliberately
+rejected inside those frozen runs. The low-level wrapper still supports
+`-Build` with a new, non-existing receipt path. Rebuilding or changing sources,
+DLLs, dependencies or .NET invalidates resume. Use a new profile/output directory,
+never overwrite old PNGs/manifests. Batch capture amortizes source/runtime hash
+checks and is allowed only after the existing batch-equivalence Gate.
+
+New raw manifests receive `rendererExecution` only after both pre- and
+post-execution checks pass. Interrupted/unverified batches cannot silently adopt
+their partial output. Downstream overlap/stitch/Z5 export checks the new identity
+and raw-to-core hash chain; the historical v1 route remains readable.
+
+`npm.cmd run self-test-renderer-identity` exercises small synthetic fixtures,
+including real PowerShell resume entry points, without Dota/GPU rendering.
+The receipt does not freeze GPU driver behavior, prove identical pixels, or
+replace H2–H5 / seam / coordinate / formula Gates. Source snapshots are deliberately
+conservative: even unrelated tracked source changes invalidate a run.
+
 The production route for build `24266061` is now
 `vrf-strict-orthographic-canonical-canvas-v1`. It renders the current compiled
 map VPK through a strict vertical orthographic camera. The output is normal 3D

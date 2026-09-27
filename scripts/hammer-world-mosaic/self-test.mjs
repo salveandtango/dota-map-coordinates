@@ -105,9 +105,9 @@ if (config.schemaVersion === 1) {
   process.stdout.write(
     `PASS ${config.profileId}: exact H2/H3, 5120x5248 H4, ${config.h5.landmarkCount}-tower H5\n`
   );
-} else if (config.schemaVersion === 4) {
+} else if ([4, 5].includes(config.schemaVersion)) {
   const plan = buildTilePlan(config);
-  assert.equal(config.routeId, "vrf-strict-orthographic-tile-stack-v1");
+  assert.equal(config.routeId, `vrf-strict-orthographic-tile-stack-v${config.schemaVersion === 5 ? 2 : 1}`);
   assert.equal(config.projection.camera.heightControlsScale, false);
   assert.equal(config.projection.camera.scaleControl,
     "projection span divided by output pixels");

@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import sharp from "sharp";
+import { validateCapturedTileIdentity } from './renderer-identity.mjs';
 import {
   exists,
   readJson,
@@ -70,6 +71,10 @@ for (const tile of plan.tiles) {
   if (coreManifest.output.sha256 !== coreHash) {
     throw new Error(`Core SHA256 does not match its crop manifest: ${tile.id}`);
   }
+  const rawHash = await validateCapturedTileIdentity(options.planPath, plan, tile);
+  if (rawHash && coreManifest.input.sha256.toUpperCase() !== rawHash) {
+    throw new Error(`Core crop is not bound to this raw renderer output: ${tile.id}`);
+  }
   composites.push({
     input: corePath,
     left: tile.core.destinationRect.left,
@@ -112,6 +117,7 @@ const manifest = {
   unitsPerPixel: plan.mosaic.unitsPerPixel,
   worldToPixel: plan.mosaic.worldToPixel,
   stitchMode: plan.tiling.stitchMode,
+  renderer: plan.renderer,
   tiles: tileEvidence,
 };
 await writeFile(outputManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
